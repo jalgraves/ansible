@@ -1,0 +1,7 @@
+---
+- import_playbook: _main.yml
+- import_playbook: fail2ban/main.yml
+- import_playbook: iptables/main.yml
+- import_playbook: swapfile/main.yml
+- import_playbook: munin/main.yml
+- import_playbook: nginx/main.yml

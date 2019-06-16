@@ -1,0 +1,4 @@
+*filter
+-A INPUT -p tcp --dport 993 -i docker0 -j ACCEPT
+-A INPUT -p tcp --dport 3003 -i docker0 -j ACCEPT
+COMMIT

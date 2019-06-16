@@ -1,0 +1,15 @@
+---
+repo_version: "v0.2.1"
+repo_tarball: "https://github.com/samuel/python-pagerduty/archive/v0.2.1.tar.gz"
+repo_checksum: "sha256:fe4718f3794ac24b924b0a1354d4c6d0bb114b08400f243135c19511c8ec6a5d"
+
+script: "https://gist.githubusercontent.com/samuel/720925/raw/fa3bdc0322ade23530c32b3c7e795d64cd2cc7d2/pagerduty_munin.py"
+script_checksum: "sha256:73a693c9c551488ba60eb0de532b9b411e6a0da463228d5525994123a5dee3f5"
+
+destination_path: "/etc/pagerduty/munin"
+repo_path: "/etc/pagerduty/munin/python-pagerduty-0.2.1"
+
+MUNIN_PAGERDUTY_API_KEY: "{{ lookup('env', 'MUNIN_PAGERDUTY_API_KEY') }}"
+
+log_directory: "/var/log/pagerduty/munin"
+logrotate_script: "/etc/logrotate.d/munin-pagerduty-alerts"

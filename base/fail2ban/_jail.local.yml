@@ -1,0 +1,16 @@
+---
+    - name: Update fail2ban jail.local configuration
+      ini_file:
+        path: /etc/fail2ban/jail.local
+        section: "{{ item.section }}"
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+        state: "{{ item.state }}"
+        mode: 0644
+        backup: yes
+      with_items:
+        - { section: "DEFAULT", option: "bantime", value: 3600, state: "present" }
+        - { section: "DEFAULT", option: "ignoreip", state: "present", value: "162.88.247.40/29 54.85.19.159/32 54.86.243.33/32 54.214.247.244/32 80.231.25.0/24 80.231.219.0/24 91.198.22.0/24 100.64.0.0/10 103.11.200.0/22 108.59.160.0/20 162.88.0.0/16 185.38.96.0/22 195.160.236.0/22 203.62.195.0/24 204.13.248.0/22 206.128.104.0/24 206.128.106.0/24 208.76.56.0/21 208.78.68.0/22 216.146.32.0/21 216.146.40.0/22 216.146.44.0/24 216.146.45.0/25 216.146.45.128/26 216.146.45.192/27 216.146.45.224/28 216.146.45.240/32 216.146.45.241/32 216.146.45.242/32 216.146.45.243/32 216.146.45.244/32 216.146.45.245/32 216.146.46.0/23" }
+
+    - name: Reload fail2ban configuration
+      command: fail2ban-client reload

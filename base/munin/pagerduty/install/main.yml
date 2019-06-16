@@ -1,0 +1,97 @@
+---
+- hosts: dynqatesting.com
+
+  # https://www.pagerduty.com/docs/guides/munin-integration-guide/
+
+  tasks:
+
+    - include_tasks: ../../../../server_ready.yml
+    - include_vars: ../vars.yml
+
+    - name: Create Pagerduty module path
+      file:
+        path: "{{ destination_path }}"
+        state: directory
+
+    - name: Download samuel/python-pagerduty repo with check (sha256)
+      get_url:
+        url: "{{ repo_tarball }}"
+        dest: "{{ destination_path }}/python-pagerduty-{{ repo_version }}.tar.gz"
+        checksum: "{{ repo_checksum }}"
+
+    - name: Extract samuel/python-pagerduty
+      unarchive:
+        src: "{{ destination_path }}/python-pagerduty-{{ repo_version }}.tar.gz"
+        dest: "{{ destination_path }}"
+        remote_src: yes
+
+    - name: Download pagerduty_munin script with check (sha256)
+      get_url:
+        url: "{{ script }}"
+        dest: "{{ repo_path }}/pagerduty_munin.py.orig"
+        checksum: "{{ script_checksum }}"
+        mode: 0755
+        owner: root
+        group: munin
+
+      # Command to create diff file: diff -Naur original.py modified.py
+    - name: Copy diff file inserting pagerduty service_key
+      template:
+        src: pagerduty_munin.py.diff.j2
+        dest: "{{ repo_path }}/pagerduty_munin.py.diff"
+        mode: 0660
+        owner: root
+        group: munin
+
+    - name: Copy original pagerduty_munin script before patch
+      copy:
+        src: "{{ repo_path }}/pagerduty_munin.py.orig"
+        dest: "{{ repo_path }}/pagerduty_munin.py"
+        remote_src: yes
+        mode: 0750
+        owner: root
+        group: munin
+
+    - name: Patch diff file inserting pagerduty service_key
+      patch:
+        src: "{{ repo_path }}/pagerduty_munin.py.diff"
+        dest: "{{ repo_path }}/pagerduty_munin.py"
+        remote_src: yes
+
+    - name: Create Pagerduty log directory
+      file:
+        path: "/var/log/pagerduty"
+        state: directory
+        mode: 0755
+
+    - name: Create pagerduty/munin log directory
+      file:
+        path: "{{ log_directory }}"
+        state: directory
+        mode: 0770
+        owner: root
+        group: munin
+
+    - name: Touch alert.log file
+      file:
+        path: "{{ log_directory }}/alert.log"
+        state: touch
+        mode: 0660
+        owner: root
+        group: munin
+
+    - name: Setup logrotate for alert.log
+      blockinfile:
+        path: "{{ logrotate_script }}"
+        create: yes
+        mode: 0644
+        block: |
+          {{ log_directory }}/alert.log {
+              daily
+              missingok
+              rotate 7
+              compress
+              copytruncate
+              notifempty
+              create 660 root munin
+          }

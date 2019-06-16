@@ -1,0 +1,24 @@
+--- pagerduty_munin.py.orig	2018-04-16 18:25:42.370598010 +0000
++++ pagerduty_munin.py	2018-04-16 18:27:34.262123713 +0000
+@@ -35,13 +35,16 @@
+     return events
+
+ def main():
+-    if len(sys.argv) < 2:
+-        sys.stderr.write("Service key required as first argument\n")
+-        sys.exit(1)
+-
+-    service_key = sys.argv[1]
++    service_key = "{{ MUNIN_PAGERDUTY_API_KEY }}"
+
+     alert = sys.stdin.read()
++    with open("{{ log_directory }}/alert.log", 'a') as fp:
++        import datetime
++        fp.write(datetime.datetime.now().isoformat())
++        fp.write("\n")
++        fp.write(alert)
++        fp.write("\n")
++
+     hosts = parse(alert)
+
+     pg = PagerDuty(service_key)

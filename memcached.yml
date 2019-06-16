@@ -1,0 +1,23 @@
+---
+- hosts: beantownpub.com
+  tasks:
+
+    - name: Check for docker network
+      shell: docker network list
+      register: docker_nets
+
+    - name: create docker backend network
+      command: docker network create backend --subnet=192.168.42.0/24 --gateway=192.168.42.1 --ip-range=192.168.42.0/24
+      when: docker_nets.stdout.find(' backend') == -1
+
+    - name: Create memcached container
+      docker_container:
+        name: memcached
+        image: memcached:latest
+        restart_policy: unless-stopped
+        state: started
+        exposed_ports:
+          - 11211
+        networks:
+          - name: bridge
+          - name: backend

@@ -1,0 +1,26 @@
+---
+- hosts: dynqatesting.com
+  tasks:
+
+    - include_tasks: ../../server_ready.yml
+
+    - name: Add nginx repository
+      apt_repository:
+        repo: ppa:nginx/stable
+        state: present
+
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Copy server config
+      copy:
+        src: sites-available/default
+        dest: /etc/nginx/sites-available/default
+
+    - name: Reload nginx configs
+      service:
+        name: nginx
+        state: restarted

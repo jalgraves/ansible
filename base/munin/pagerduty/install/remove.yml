@@ -1,0 +1,16 @@
+---
+- hosts: dynqatesting.com
+  tasks:
+
+    - include_tasks: ../../../../server_ready.yml
+    - include_vars: ../vars.yml
+
+    - name: Remove pagerduty/munin module path
+      file:
+        path: "{{ destination_path }}"
+        state: absent
+
+    - name: Remove pagerduty/munin logrotate script
+      file:
+        path: "{{ logrotate_script }}"
+        state: absent

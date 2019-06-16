@@ -1,0 +1,12 @@
+---
+- hosts: dynqatesting.com
+  tasks:
+
+    - include_tasks: ../../server_ready.yml
+
+    - name: Apt install fail2ban
+      apt:
+        name: fail2ban
+        state: present
+
+    - include_tasks: _jail.local.yml

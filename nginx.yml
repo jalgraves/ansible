@@ -1,0 +1,40 @@
+---
+- hosts: 192.241.254.242
+  tasks:
+
+  - name: Create NGINX Ansible directory
+    file: path=/root/ansible/nginx state=directory
+
+  - name: Create NGINX log directory
+    file: path=/root/data/beantown/log/nginx/ state=directory
+
+  - name: Copy NGINX files
+    copy: src=./ dest=/root/ansible/nginx/
+
+  #- name: Build NGINX image
+  #  docker_image:
+  #    path: /root/ansible/nginx/
+  #    name: nginx_proxy_image
+  #    tag: latest
+
+  - name: Create NGINX reverse proxy
+    docker_container:
+      image: nginx:latest
+      name: beantown_nginx
+      restart_policy: unless-stopped
+      published_ports:
+        - 0.0.0.0:80:80
+        - 0.0.0.0:443:443
+      volumes:
+        - /root/web/production/static_sites/drdavisicecream:/usr/share/nginx/html/drdavisicecream
+        - /root/web/production/beantown_app/static:/etc/nginx/html/static
+        - /root/ansible/nginx/conf/:/etc/nginx/conf.d/
+        - /etc/letsencrypt/:/etc/letsencrypt/
+        - /root/data/beantown/log/nginx/:/var/log/nginx/
+      networks:
+        - name: bridge
+        - name: backend
+
+  #- name: Apply Resource Limits to NGINX Container
+  #  shell: docker container update --cpus=2 --memory=300m nginx_proxy
+

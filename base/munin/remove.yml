@@ -1,0 +1,5 @@
+---
+- hosts: dynqatesting.com
+
+- import_playbook: pagerduty/remove.yml
+- import_playbook: _uninstall.yml

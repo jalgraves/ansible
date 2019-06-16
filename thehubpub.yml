@@ -1,0 +1,39 @@
+---
+- hosts: beantownpub.com
+  tasks:
+
+    - name: Check for docker network
+      shell: docker network list
+      register: docker_nets
+
+    - name: create docker backend network
+      command: docker network create backend --subnet=192.168.42.0/24 --gateway=192.168.42.1 --ip-range=192.168.42.0/24
+      when: docker_nets.stdout.find(' backend') == -1
+
+    - name: pull latest code from git repo
+      command: git pull origin
+      args:
+        chdir: /code/production/jal
+
+    - name: Create Hub Pub container
+      docker_container:
+        name: thehubpub
+        image: jalgraves/jal_django:0.0.1
+        restart_policy: unless-stopped
+        state: started
+        entrypoint: "/bin/sh entrypoint.sh"
+        exposed_ports:
+          - 8000
+        volumes:
+          - /code/production/jal/dist/thehubpub:/app
+          - /code/production/jal/dist/thehubpub/static:/static
+          - /code/production/jal/dist/thehubpub/dbbackups/:/var/db_backups
+        networks:
+          - name: bridge
+          - name: backend
+        env:
+            EVENTFUL_API_KEY: "{{ lookup('env', 'EVENTFUL_API_KEY') }}"
+            JAL_BEANTOWN_REQUESTS_GMAIL_PASSWORD: "{{ lookup('env', 'JAL_BEANTOWN_REQUESTS_GMAIL_PASSWORD') }}"
+            JAL_TWILIO_SID: "{{ lookup('env', 'JAL_TWILIO_SID') }}"
+            JAL_TWILIO_TOKEN: "{{ lookup('env', 'JAL_TWILIO_TOKEN') }}"
+            JAL_SLACK_WEBHOOK_URL: "{{ lookup('env', 'JAL_SLACK_WEBHOOK_URL') }}"

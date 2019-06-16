@@ -1,0 +1,16 @@
+---
+- import_playbook: pagerduty/purge.yml
+- import_playbook: _uninstall.yml
+
+- hosts: dynqatesting.com
+
+  tasks:
+    - name: Purge munin
+      apt:
+        name: "{{ item }}"
+        state: absent
+        purge: yes
+      with_items:
+        - "munin"
+        - "munin-node"
+        - "munin-plugins-core"

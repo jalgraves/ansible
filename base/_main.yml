@@ -1,0 +1,28 @@
+---
+- hosts: 68.183.144.128
+  tasks:
+    
+    - include_tasks: docker.yml
+
+    - name: Apt install base requirements
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - "git"
+        - "make"
+    
+    - name: enable bash_completion
+      blockinfile:
+        path: /etc/bash.bashrc
+        content: |
+          # enable bash completion in interactive shells
+          if ! shopt -oq posix; then
+            if [ -f /usr/share/bash-completion/bash_completion ]; then
+              . /usr/share/bash-completion/bash_completion
+            elif [ -f /etc/bash_completion ]; then
+              . /etc/bash_completion
+            fi
+          fi
+        state: present
+        backup: yes

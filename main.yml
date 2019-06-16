@@ -1,0 +1,80 @@
+---
+- hosts: beantownpub.com
+  tasks:
+
+    - debug:
+        msg: "{{ lookup('env', 'EVENTFUL_API_KEY') }}"
+
+    - name: Check for docker network
+      shell: docker network list
+      register: docker_nets
+
+    - name: create docker backend network
+      command: docker network create backend --subnet=192.168.42.0/24 --gateway=192.168.42.1 --ip-range=192.168.42.0/24
+      when: docker_nets.stdout.find(' backend') == -1
+
+    - name: pull latest code from git repo
+      command: git pull origin
+      args:
+        chdir: /code/production/jal
+
+    - name: Build Beantown image
+      docker_image:
+        path: /code/production/jal/dist/beantown
+        name: beantown_image
+        state: present
+        force: yes
+        tag: latest
+
+    - name: Build Beantown South image
+      docker_image:
+        path: /code/production/jal/dist/beantown_south
+        name: beantownsouth_image
+        state: present
+        force: yes
+        tag: latest
+
+    - name: Create Beantown container
+      docker_container:
+        name: beantown
+        image: beantown_image:latest
+        restart_policy: unless-stopped
+        state: started
+        entrypoint: "/bin/sh entrypoint.sh"
+        exposed_ports:
+          - 8000
+        volumes:
+          - /code/production/jal/dist/beantown/dist/static:/static
+          - /code/production/jal/dist/beantown/dbbackups/:/var/db_backups
+        networks:
+          - name: bridge
+          - name: backend
+        env:
+            EVENTFUL_API_KEY: "{{ lookup('env', 'EVENTFUL_API_KEY') }}"
+            JAL_BEANTOWN_REQUESTS_GMAIL_PASSWORD: "{{ lookup('env', 'JAL_BEANTOWN_REQUESTS_GMAIL_PASSWORD') }}"
+            JAL_TWILIO_SID: "{{ lookup('env', 'JAL_TWILIO_SID') }}"
+            JAL_TWILIO_TOKEN: "{{ lookup('env', 'JAL_TWILIO_TOKEN') }}"
+            JAL_SLACK_WEBHOOK_URL: "{{ lookup('env', 'JAL_SLACK_WEBHOOK_URL') }}"
+
+    - name: Create Beantown South container
+      docker_container:
+        name: beantown_south
+        image: beantownsouth_image:latest
+        restart_policy: unless-stopped
+        state: started
+        entrypoint: "/bin/sh entrypoint.sh"
+        exposed_ports:
+          - 8000
+        volumes:
+          - /code/production/jal/dist/beantown_south/dist/static:/static
+          - /code/production/jal/dist/beantown_south/dbbackups/:/var/db_backups
+        networks:
+          - name: bridge
+          - name: backend
+
+    - name: Check if NGINX container exists
+      command: docker ps -f name=beantown_nginx -q
+      register: nginx_result
+
+    - debug:
+        msg: "{{ nginx_result }}"

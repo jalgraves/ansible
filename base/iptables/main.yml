@@ -1,0 +1,20 @@
+---
+- hosts: dynqatesting.com
+  tasks:
+
+    - include_tasks: ../../server_ready.yml
+
+    - name: Create additional iptables rules file
+      copy:
+        src: iptables.additional.rules
+        dest: /etc/iptables.additional.rules
+        mode: 0644
+
+    - name: Create if-pre-up script to apply additional rules
+      copy:
+        src: iptables_additional
+        dest: /etc/network/if-pre-up.d/iptables_additional
+        mode: 0755
+
+    - name: Apply additional iptables rules
+      command: /etc/network/if-pre-up.d/iptables_additional

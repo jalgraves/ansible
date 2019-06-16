@@ -1,0 +1,11 @@
+---
+- import_playbook: remove.yml
+
+- hosts: dynqatesting.com
+
+  tasks:
+    - name: Remove pagerduty/munin log directory
+      file:
+        path: "{{ log_directory }}"
+        state: absent
+

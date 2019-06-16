@@ -1,0 +1,3 @@
+---
+- import_playbook: config/purge.yml
+- import_playbook: install/purge.yml

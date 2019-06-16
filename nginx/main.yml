@@ -1,0 +1,48 @@
+---
+- hosts: beantownpub.com
+  tasks:
+
+  - name: Create NGINX Ansible directory
+    file: path=/root/ansible/nginx state=directory
+
+  - name: Create NGINX log directory
+    file: path=/root/data/beantown/log/nginx/ state=directory
+
+  - name: Copy NGINX files
+    copy: src=./ dest=/root/ansible/nginx/
+  
+  - name: Create NGINX reverse proxy
+    docker_container:
+      image: nginx:latest
+      name: beantown_nginx
+      restart_policy: unless-stopped
+      published_ports:
+        - 0.0.0.0:80:80
+        - 0.0.0.0:443:443
+      volumes:
+        - /root/web/production/beantown_app/static:/etc/nginx/html/static
+        - /root/ansible/nginx/conf/:/etc/nginx/conf.d/
+        - /etc/letsencrypt/:/etc/letsencrypt/
+        - /root/data/beantown/log/nginx/:/var/log/nginx/
+        - /code/production/jal/dist/beantown/static:/etc/nginx/html/beantown
+        - /code/production/jal/dist/beantown_south/static:/etc/nginx/html/beantownsouth
+        - /code/production/jal/dist/thehubpub/static:/etc/nginx/html/thehubpub
+        - /code/production/jal/dist/jalgraves/static:/etc/nginx/html/jalgraves
+        - /code/production/jal/dist/ziggys/static:/etc/nginx/html/ziggys
+        - /code/production/jal/dist/drdavisicecream/static:/etc/nginx/html/drdavisicecream
+        - /code/production/jal/dist/wavelengths/static:/etc/nginx/html/wavelengths
+      networks:
+        - name: bridge
+        - name: backend
+
+  #- name: Create DB
+  #  docker_container:
+  #    image: postgres:latest
+  #    name: beantown_psql
+  #    restart_policy: unless-stopped
+  #    networks:
+  #      - name: bridge
+  #      - name: backend
+
+  #- name: Apply Resource Limits to NGINX Container
+  #  shell: docker container update --cpus=2 --memory=300m nginx_proxy

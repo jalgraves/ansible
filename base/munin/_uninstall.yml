@@ -1,0 +1,23 @@
+---
+- hosts: dynqatesting.com
+  tasks:
+
+    - name: Get state of /etc/init.d/munin-node
+      stat:
+        path: /etc/init.d/munin-node
+      register: munin_node_file
+
+    - name: Disable munin
+      service:
+        name: munin-node
+        enabled: no
+        state: stopped
+      when: munin_node_file.stat.exists
+
+    - name: Uninstall munin
+      apt:
+        name: "{{ item }}"
+        state: absent
+      with_items:
+        - "munin"
+        - "munin-node"

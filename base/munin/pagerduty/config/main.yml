@@ -1,0 +1,39 @@
+---
+- hosts: dynqatesting.com
+
+  # https://www.pagerduty.com/docs/guides/munin-integration-guide/
+
+  tasks:
+
+    - include_tasks: ../../../../server_ready.yml
+    - include_vars: ../vars.yml
+
+    - name: Update Munin contacts config - add pagerduty
+      lineinfile:
+        path: /etc/munin/munin-conf.d/contacts.conf
+        create: yes
+        mode: 0644
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: "{{ item.state }}"
+      with_items:
+        - { regexp: "^contact\\.dynqa_pagerduty\\.command ", line: "contact.dynqa_pagerduty.command {{ repo_path }}/pagerduty_munin.py", state: "present" }
+        - { regexp: "^contact\\.dynqa_pagerduty\\.always_send ", line: "contact.dynqa_pagerduty.always_send warning critical", state: "present" }
+
+    - name: Add alert options to monitor config
+      lineinfile:
+        path: /etc/munin/munin-conf.d/monitor-host.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: "{{ item.state }}"
+      with_items:
+        - { regexp: "load\\.warning ", line: "    load.warning :{{ ansible_processor_cores * 100.0 * 0.80 }}", state: "present" }
+        - { regexp: "load\\.critical ", line: "    load.critical :{{ ansible_processor_cores * 100.0 * 0.90 }}", state: "present" }
+        - { regexp: "memory\\.apps\\.warning ", line: "    memory.apps.warning :{{ ansible_memtotal_mb * 1048576 * 0.90 }}", state: "present" }
+        - { regexp: "memory\\.apps\\.critical ", line: "    memory.apps.critical :{{ ansible_memtotal_mb * 1048576 * 0.95 }}", state: "present" }
+        - { regexp: "contacts ", line: "    contacts dynqa_pagerduty", state: "present" }
+
+    - name: restart munin
+      service:
+        name: munin-node
+        state: restarted

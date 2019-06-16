@@ -1,0 +1,29 @@
+---
+- hosts: 68.183.144.128
+  tasks:
+
+    - name: Check for docker network
+      shell: docker network list
+      register: docker_nets
+
+    - name: create docker backend network
+      command: docker network create backend --subnet=192.168.42.0/24 --gateway=192.168.42.1 --ip-range=192.168.42.0/24
+      when: docker_nets.stdout.find(' backend') == -1
+
+    - name: copy logstash conf
+      copy: src=../compose/logstash/pipeline/logstash.conf dest=/root/data/logstash/logstash.conf
+
+    - name: Create logstash container
+      docker_container:
+        name: logstash
+        image: docker.elastic.co/logstash/logstash:6.7.0
+        restart_policy: unless-stopped
+        state: started
+        exposed_ports:
+          - 9600
+          - 55174
+        volumes:
+          - /root/data/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+        networks:
+          - name: bridge
+          - name: backend

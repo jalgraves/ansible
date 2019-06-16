@@ -1,0 +1,3 @@
+---
+- import_playbook: install/main.yml
+- import_playbook: config/main.yml

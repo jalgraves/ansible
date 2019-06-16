@@ -1,0 +1,51 @@
+---
+- hosts: dynqatesting.com
+  tasks:
+
+    - include_tasks: ../../../../server_ready.yml
+    - include_vars: ../vars.yml
+
+    - name: Get contacts config state
+      stat:
+        path: /etc/munin/munin-conf.d/contacts.conf
+      register: contacts_file
+
+    - name: Update Munin contacts config - remove pagerduty
+      lineinfile:
+        path: /etc/munin/munin-conf.d/contacts.conf
+        regexp: "{{ item.regexp }}"
+        state: "{{ item.state }}"
+      with_items:
+        - { regexp: "^contact\\.dynqa_pagerduty\\.command ", state: "absent" }
+        - { regexp: "^contact\\.dynqa_pagerduty\\.always_send ", state: "absent" }
+      when: contacts_file.stat.exists
+
+    - name: Get monitor config state
+      stat:
+        path: /etc/munin/munin-conf.d/monitor-host.conf
+      register: monitor_file
+
+    - name: Remove alert options from monitor config
+      lineinfile:
+        path: /etc/munin/munin-conf.d/monitor-host.conf
+        regexp: "{{ item.regexp }}"
+        state: "{{ item.state }}"
+      with_items:
+        - { regexp: "load\\.warning ", state: "absent" }
+        - { regexp: "load\\.critical ", state: "absent" }
+        - { regexp: "memory\\.apps\\.warning ", state: "absent" }
+        - { regexp: "memory\\.apps\\.critical ", state: "absent" }
+        - { regexp: "contacts ", state: "absent" }
+      when: monitor_file.stat.exists
+
+
+    - name: Get state of /etc/init.d/munin-node
+      stat:
+        path: /etc/init.d/munin-node
+      register: munin_node_file
+
+    - name: restart munin
+      service:
+        name: munin-node
+        state: restarted
+      when: munin_node_file.stat.exists

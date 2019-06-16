@@ -1,0 +1,5 @@
+---
+- hosts: dynqatesting.com
+
+- import_playbook: config/remove.yml
+- import_playbook: install/remove.yml
