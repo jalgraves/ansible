@@ -21,6 +21,7 @@
         image: jalgraves/jal_django:0.0.1
         restart_policy: unless-stopped
         state: started
+        restart: yes
         entrypoint: "/bin/sh entrypoint.sh"
         exposed_ports:
           - 8000
