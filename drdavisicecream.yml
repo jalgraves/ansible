@@ -2,25 +2,18 @@
 - hosts: beantownpub.com
   tasks:
 
-    - name: Check for docker network
-      shell: docker network list
-      register: docker_nets
-
-    - name: create docker backend network
-      command: docker network create backend --subnet=192.168.42.0/24 --gateway=192.168.42.1 --ip-range=192.168.42.0/24
-      when: docker_nets.stdout.find(' backend') == -1
-
     - name: pull latest code from git repo
-      command: git checkout 0.0.14
+      command: git pull origin
       args:
         chdir: /code/production/jal
 
     - name: Create Doc's container
       docker_container:
         name: drdavisicecream
-        image: jalgraves/jal_django:0.0.1
+        image: jalgraves/jal_debian:latest
         restart_policy: unless-stopped
         state: started
+        restart: yes
         entrypoint: "/bin/sh entrypoint.sh"
         exposed_ports:
           - 8000
@@ -29,3 +22,7 @@
         networks:
           - name: bridge
           - name: backend
+        env:
+            SITE_NAME: "drdavisicecream"
+            LOGSTASH_HOST: "logstash.backend:9600"
+            LOGSTASH_PATH: "/app/log/*.log"

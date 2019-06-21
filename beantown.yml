@@ -2,14 +2,6 @@
 - hosts: beantownpub.com
   tasks:
 
-    - name: Check for docker network
-      shell: docker network list
-      register: docker_nets
-
-    - name: create docker backend network
-      command: docker network create backend --subnet=192.168.42.0/24 --gateway=192.168.42.1 --ip-range=192.168.42.0/24
-      when: docker_nets.stdout.find(' backend') == -1
-
     - name: pull latest code from git repo
       command: git pull origin
       args:
@@ -38,3 +30,6 @@
             JAL_TWILIO_SID: "{{ lookup('env', 'JAL_TWILIO_SID') }}"
             JAL_TWILIO_TOKEN: "{{ lookup('env', 'JAL_TWILIO_TOKEN') }}"
             JAL_SLACK_WEBHOOK_URL: "{{ lookup('env', 'JAL_SLACK_WEBHOOK_URL') }}"
+            SITE_NAME: "beantown"
+            LOGSTASH_HOST: "logstash.backend:9600"
+            LOGSTASH_PATH: "/app/log/*.log"
